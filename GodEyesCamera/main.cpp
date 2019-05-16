@@ -292,13 +292,13 @@ void DsClientClean() {
 
 
 void ResizeAndSendPic() {
-	if (EnableSendData) {
+	if (EnableCSSend) {
 		if (CodeState0 && !Buffer0Mutex)
 		{
 			Mat src{
 			cvSize(ImageWidth,ImageHeight),
 			CV_8UC1,
-			Buffer0
+			Buffer0Copy
 			};
 			Mat image0;
 			resize(src, image0, Size(PictureWidth, PictureHeight));
@@ -329,7 +329,7 @@ void ResizeAndSendPic() {
 			Mat src{
 			cvSize(ImageWidth,ImageHeight),
 			CV_8UC1,
-			Buffer1
+			Buffer1Copy
 			};
 			Mat image1;
 			resize(src, image1, Size(PictureWidth, PictureHeight));
@@ -802,92 +802,94 @@ void AcqImageThread()
 		//stOutFrame = (MV_FRAME_OUT*)malloc(sizeof(MV_FRAME_OUT));
 		int ret = camera.GetImage(stOutFrame);
 		if (ret == MV_OK) {
-			//Analyze The photo
-			if ((Analyzingcounter < (encodeparam.FrameCut + 1)) && !AnalyzeEnd )
+			if (CameraType == 0)
 			{
-				Mat matImage{
-				cvSize(ImageWidth,ImageHeight),
-				CV_8UC1,
-				(stOutFrame).pBufAddr
-				};
-
-				Rect rect(0,0,camerainitparam.in_w,500);
-
-				Mat RoiImage = matImage(rect);
-
-				cv::Scalar AverPic = cv::mean(RoiImage);
-
-				//AverageData[stOutFrame.stFrameInfo.nFrameNum% (encodeparam.FrameCut + 1)] =  AverPic[0];
-
-				//AverageofAverage = (AverageofAverage + AverageData[stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1)]) / 2;
-				
-				if (AverPic[0] > MaxAvr)
+				//Analyze The photo
+				if ((Analyzingcounter < (encodeparam.FrameCut + 1)) && !AnalyzeEnd)
 				{
-					MaxAvr = AverPic[0];
-					MaxPos = stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1);
+					Mat matImage{
+					cvSize(ImageWidth,ImageHeight),
+					CV_8UC1,
+					(stOutFrame).pBufAddr
+					};
 
-				}				
-				Analyzingcounter++;
+					Rect rect(0, 0, camerainitparam.in_w, 500);
 
+					Mat RoiImage = matImage(rect);
 
-			}
-			if ( Analyzingcounter >= (encodeparam.FrameCut + 1) && !AnalyzeEnd )
-			{
-				Mat matImage{
-				cvSize(ImageWidth,ImageHeight),
-				CV_8UC1,
-				(stOutFrame).pBufAddr
-				};
+					cv::Scalar AverPic = cv::mean(RoiImage);
 
-				Rect rect(0, 0, camerainitparam.in_w, 500);
+					//AverageData[stOutFrame.stFrameInfo.nFrameNum% (encodeparam.FrameCut + 1)] =  AverPic[0];
 
-				Mat RoiImage = matImage(rect);
+					//AverageofAverage = (AverageofAverage + AverageData[stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1)]) / 2;
 
-				cv::Scalar AverPic = cv::mean(RoiImage);
+					if (AverPic[0] > MaxAvr)
+					{
+						MaxAvr = AverPic[0];
+						MaxPos = stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1);
 
-				//cv::Scalar AverPic = cv::mean(matImage);
+					}
+					Analyzingcounter++;
 
-				if (AverPic[0] > MaxVeAvr)
-				{
-					MaxVeAvr = AverPic[0];
-					MaxVerify = stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1);
 
 				}
-
-				if (Analyzingcounter == 2 * (encodeparam.FrameCut + 1) - 1)
+				if (Analyzingcounter >= (encodeparam.FrameCut + 1) && !AnalyzeEnd)
 				{
-					//Get the right beat
-					if (MaxVerify == MaxPos) {
+					Mat matImage{
+					cvSize(ImageWidth,ImageHeight),
+					CV_8UC1,
+					(stOutFrame).pBufAddr
+					};
+
+					Rect rect(0, 0, camerainitparam.in_w, 500);
+
+					Mat RoiImage = matImage(rect);
+
+					cv::Scalar AverPic = cv::mean(RoiImage);
+
+					//cv::Scalar AverPic = cv::mean(matImage);
+
+					if (AverPic[0] > MaxVeAvr)
+					{
+						MaxVeAvr = AverPic[0];
+						MaxVerify = stOutFrame.stFrameInfo.nFrameNum % (encodeparam.FrameCut + 1);
+
+					}
+
+					if (Analyzingcounter == 2 * (encodeparam.FrameCut + 1) - 1)
+					{
+						//Get the right beat
+						if (MaxVerify == MaxPos) {
+							AnalyzeEnd = true;
+							BeatRecord = MaxVerify;
+							Analyzingcounter = 0;
+							MaxVerify = 0;
+							MaxAvr = 0;
+							FindBeatTimes = 0;
+						}
+						//Get The Wrong one
+						else {
+							Analyzingcounter = 0;
+							MaxVerify = 0;
+							MaxAvr = 0;
+							FindBeatTimes++;
+						}
+					}
+
+					Analyzingcounter++;
+
+					//Get Beat Time out
+					if (FindBeatTimes > 30) {
 						AnalyzeEnd = true;
-						BeatRecord = MaxVerify;
-						Analyzingcounter = 0;
-						MaxVerify = 0;
-						MaxAvr = 0;
+						printf("\nCan't find the beat!\n\n");
 						FindBeatTimes = 0;
-					}
-					//Get The Wrong one
-					else {
 						Analyzingcounter = 0;
 						MaxVerify = 0;
 						MaxAvr = 0;
-						FindBeatTimes++;
 					}
+
 				}
-
-				Analyzingcounter++;
-
-				//Get Beat Time out
-				if (FindBeatTimes > 30) {
-					AnalyzeEnd = true;
-					printf("\nCan't find the beat!\n\n");
-					FindBeatTimes = 0;
-					Analyzingcounter = 0;
-					MaxVerify = 0;
-					MaxAvr = 0;
-				}
-
 			}
-
 			//Decide the Buffer 
 			lock_guard<std::mutex> lockGuard(m);
 			if (CalEnd0)
@@ -984,7 +986,9 @@ void EncodeMJPEGThread()
 	{
 		if (CodeState0 && !Buffer0Mutex)
 		{
-			encodeparam.pBufAddr = Buffer0;
+			Buffer0Copy = (unsigned char*)malloc(SizeofPixels);
+			memcpy(Buffer0Copy, Buffer0, SizeofPixels);
+			encodeparam.pBufAddr = Buffer0Copy;
 			encodeparam.pts = pts;
 
 			if (EnableCSSend) {
@@ -1012,11 +1016,13 @@ void EncodeMJPEGThread()
 			CodeState0 = 0;
 			PerforFrameenc++;	
 			//SendBuffer0.join();
-			
+			free(Buffer0Copy);
 		}
 		else if (CodeState1 && !Buffer1Mutex)
 		{
-			encodeparam.pBufAddr = Buffer1;
+			Buffer1Copy = (unsigned char*)malloc(SizeofPixels);
+			memcpy(Buffer1Copy, Buffer1, SizeofPixels);
+			encodeparam.pBufAddr = Buffer1Copy;
 			encodeparam.pts = pts;
 
 			if (EnableCSSend)
@@ -1044,7 +1050,7 @@ void EncodeMJPEGThread()
 			CodeState1 = 0;
 			PerforFrameenc++;
 			//SendBuffer1.join();
-			
+			delete(Buffer1Copy);
 		}   
 	}
 }
@@ -1125,55 +1131,57 @@ void DetectThread() {
 	//sprintf(Filename, "Detect%s.csv", camerainitparam.SerialNum);
 	//outFile.open(Filename, ios::out);
 	//free(Filename);
-	while (!DetectExit)
-	{
-		if (CodeState0 || GetImage0)
+	if (CameraType == 0) {
+		while (!DetectExit)
 		{
-			//if had not detected
-			if (DetectState0) {
+			if (CodeState0 || GetImage0)
+			{
+				//if had not detected
+				if (DetectState0) {
+					//printf("");
+					if (Buffer0Info.nFrameNum > MaxCnt)
+					{
+						MaxCnt = Buffer0Info.nFrameNum;
+						//outFile << MaxCnt << "," << BeatRecord << endl;
+					}
+					else if (Buffer0Info.nFrameNum < MaxCnt)
+					{
+						//BeatRecord = ((BeatRecord - MaxCnt - 1) % (encodeparam.FrameCut + 1)+ (encodeparam.FrameCut + 1)*2 -5 )% (encodeparam.FrameCut + 1);
+						AnalyzeEnd = false;
+						printf("BeatRecord Change");
+						MaxCnt = Buffer0Info.nFrameNum;
+						//outFile << MaxCnt <<","<< BeatRecord <<endl;
+					}
+					DetectState0 = 0;
+				}
+
+			}
+			else if (CodeState1 || GetImage1)
+			{
 				//printf("");
-				if (Buffer0Info.nFrameNum > MaxCnt)
-				{
-					MaxCnt = Buffer0Info.nFrameNum;
-					//outFile << MaxCnt << "," << BeatRecord << endl;
+				//if had not detected
+				if (DetectState1) {
+					if (Buffer1Info.nFrameNum > MaxCnt)
+					{
+						MaxCnt = Buffer1Info.nFrameNum;
+						//outFile << MaxCnt << "," << BeatRecord << endl;
+					}
+					else if (Buffer1Info.nFrameNum < MaxCnt)
+					{
+						//BeatRecord = ((BeatRecord - MaxCnt - 1) % (encodeparam.FrameCut + 1) + (encodeparam.FrameCut + 1)*2-5 ) % (encodeparam.FrameCut + 1);
+						printf("BeatRecord Change");
+						AnalyzeEnd = false;
+						MaxCnt = Buffer1Info.nFrameNum;
+						//outFile << MaxCnt << "," << BeatRecord << endl;
+					}
+					DetectState1 = 0;
 				}
-				else if (Buffer0Info.nFrameNum < MaxCnt)
-				{
-					//BeatRecord = ((BeatRecord - MaxCnt - 1) % (encodeparam.FrameCut + 1)+ (encodeparam.FrameCut + 1)*2 -5 )% (encodeparam.FrameCut + 1);
-					AnalyzeEnd = false;
-					printf("BeatRecord Change");
-					MaxCnt = Buffer0Info.nFrameNum;
-					//outFile << MaxCnt <<","<< BeatRecord <<endl;
-				}
-				DetectState0 = 0;
+
+
 			}
-			
+			Sleep(10);
+
 		}
-		else if (CodeState1 || GetImage1)
-		{
-			//printf("");
-			//if had not detected
-			if (DetectState1) {
-				if (Buffer1Info.nFrameNum > MaxCnt)
-				{
-					MaxCnt = Buffer1Info.nFrameNum;
-					//outFile << MaxCnt << "," << BeatRecord << endl;
-				}
-				else if (Buffer1Info.nFrameNum < MaxCnt)
-				{
-					//BeatRecord = ((BeatRecord - MaxCnt - 1) % (encodeparam.FrameCut + 1) + (encodeparam.FrameCut + 1)*2-5 ) % (encodeparam.FrameCut + 1);
-					printf("BeatRecord Change");
-					AnalyzeEnd = false;
-					MaxCnt = Buffer1Info.nFrameNum;
-					//outFile << MaxCnt << "," << BeatRecord << endl;
-				}
-				DetectState1 = 0;
-			}
-			
-			
-		}
-		Sleep(10);
-		
 	}
 	//outFile.close();
 }
@@ -1291,7 +1299,7 @@ int main(int argc,char* argv[])
 	
 	//COM port params
 	//FUnctionChoice
-	args.add<UINT>("function", 'f', "FunctionChoice", false, 1, cmdline::range(1, 10));
+	args.add<UINT>("function", 'f', "FunctionChoice", false, 1, cmdline::range(1, 15));
 	//CameraParam
 	args.add<FLOAT>("exptime", 'e', "CameraExposureTime", false, 13000, cmdline::range<FLOAT>(0, 1000000));
 	args.add<UINT>("expauto", '\0', "CameraExposureAuto", false, 0, cmdline::range(0, 2));
@@ -1419,6 +1427,7 @@ int main(int argc,char* argv[])
 			CalEnable = 0;
 			EncodeEnable = 1;
 			EnableCSSend = 1;
+			CameraType = 1;
 		}
 		default:
 			break;
@@ -1650,7 +1659,7 @@ int main(int argc,char* argv[])
 */
 
 	//Test Camera 
-	//const char *CST = "00660023843";
+	//const char *CST = "00C18991390";
 	//memcpy(camerainitparam.SerialNum, CST, sizeof(camerainitparam.SerialNum));
 
 	int ret;

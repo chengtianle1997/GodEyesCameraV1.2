@@ -71,6 +71,9 @@ BOOL DetectState1 = 0;
 //The double buffer
 unsigned char* Buffer0;
 unsigned char* Buffer1;
+
+unsigned char* Buffer0Copy;
+unsigned char* Buffer1Copy;
 //The information of buffer
 MV_FRAME_OUT_INFO_EX Buffer0Info;
 MV_FRAME_OUT_INFO_EX Buffer1Info;
@@ -91,7 +94,7 @@ int DetectExit = 0;
 int ResVisAuto = 0;
 int ResVisManu = 0;
 int EncodeEnable = 0;
-int CalEnable = 1;
+int CalEnable = 0;
 int EnableSendData = 0; 
 //PicSyc
 int EnableCSSend = 0;
@@ -148,3 +151,6 @@ int Format = 0;
 bool AnalyzeEnd = false;
 bool CalAvrEnd = false;
 bool FindBeatEnable = false;
+
+//0: Calculate Camera  1: VO Camera
+int CameraType = 0;
