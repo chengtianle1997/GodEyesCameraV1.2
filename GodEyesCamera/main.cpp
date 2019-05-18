@@ -229,7 +229,7 @@ void ClientInit()
 
 	//int Serverport;
 
-	Serverport = clientparam.StartUpPort + camerainitparam.devNum;
+	Serverport = clientparam.StartUpPort + camerainitparam.DevPort;
 
 	ret = client.ClientConnect(Serverport, clientparam.ServerAddr);
 
@@ -251,7 +251,7 @@ void CsClinetInit() {
 
 	//int Serverport;
 
-	Serverport = csclientparam.StartUpPort + camerainitparam.devNum;
+	Serverport = csclientparam.StartUpPort + camerainitparam.DevPort;
 
 	printf("ServerPort:%d\n", Serverport);
 
@@ -275,7 +275,7 @@ void DsClientInit() {
 
 	//int Serverport;
 
-	Serverport = dsclientparam.StartUpPort + camerainitparam.devNum;
+	Serverport = dsclientparam.StartUpPort + camerainitparam.DevPort;
 
 	ret = client.DsClientConnect(Serverport, dsclientparam.ServerAddr);
 
@@ -321,7 +321,8 @@ void ResizeAndSendPic() {
 			memcpy(picturebuffer, &Sockpic, sizeof(SocketPicture));
 
 			//发包
-			client.CsClientSend(picturebuffer, sizeof(SocketPicture));
+			int ret = client.CsClientSend(picturebuffer, sizeof(SocketPicture));
+			//printf("Picture Send0 Res:%d\n", ret);
 
 		}
 		else if (CodeState1 && !Buffer1Mutex)
@@ -350,7 +351,8 @@ void ResizeAndSendPic() {
 			memcpy(picturebuffer, &Sockpic, sizeof(SocketPicture));
 
 			//发包
-			client.CsClientSend(picturebuffer, sizeof(SocketPicture));
+			int ret = client.CsClientSend(picturebuffer, sizeof(SocketPicture));
+			//printf("Picture Send1 Res:%d\n", ret);
 
 		}
 	}
@@ -360,7 +362,7 @@ void ResizeAndSendPic() {
 }
 
 void SendDataToCsServer() {
-	if (GetImage0 && !CalEnd0 && !Buffer0Mutex) {
+	//if (GetImage0) {
 		//Package the Data
 		SocketPackageTrim PackageData0;
 		for (int i = 0; i < INFO_MAX_BUFFER_SIZE; i++)
@@ -371,8 +373,8 @@ void SendDataToCsServer() {
 		PackageData0.Framecnt = Buffer0Info.nFrameNum;
 		for (int i = 0; i <ImageHeight/DataTrim; i++)
 		{
-			PackageData0.s[i] = Calparam.point[i*10].s;
-			PackageData0.ay[i] = Calparam.point[i*10].ay;
+			PackageData0.s[i] = Calparam.point[i*DataTrim].s;
+			PackageData0.ay[i] = Calparam.point[i*DataTrim].ay;
 		}
 
 		//outFile << PackageData0.SerialNumber << "," << PackageData0.Framecnt;
@@ -380,49 +382,54 @@ void SendDataToCsServer() {
 
 		//SendQueue.push(PackageData0);
 		//int q = SendQueue.size();
-		if (EnableSendData)
-		{
-			char* buf = (char*)malloc(sizeof(SocketPackageTrim));
+		/*if (EnableSendData)
+		{*/
+		char* buf = (char*)malloc(sizeof(SocketPackageTrim));
 
-			memcpy(buf, &PackageData0, sizeof(SocketPackageTrim));
+		memcpy(buf, &PackageData0, sizeof(SocketPackageTrim));
 
-			client.DsClientSend(buf, sizeof(SocketPackageTrim));
+		int ret = client.DsClientSend(buf, sizeof(SocketPackageTrim));
 
-			free(buf);
-		}
-	}
+		//printf("Send Result0:%d\n", ret);
 
-	else if (GetImage1 && !CalEnd1 && !Buffer1Mutex)
-	{
-		//Package the Data
-		SocketPackageTrim PackageData1;
-		for (int i = 0; i < INFO_MAX_BUFFER_SIZE; i++)
-		{
-			PackageData1.SerialNumber[i] = camerainitparam.DevInfo.SpecialInfo.stUsb3VInfo.chSerialNumber[i];
-		}
+		free(buf);
+		//}
+	//}
 
-		PackageData1.Framecnt = Buffer0Info.nFrameNum;
-		for (int i = 0; i < ImageHeight / DataTrim; i++)
-		{
-			PackageData1.s[i] = Calparam.point[i*10].s;
-			PackageData1.ay[i] = Calparam.point[i*10].ay;
-		}
+	//else if (GetImage1)
+	//{
+	//	//Package the Data
+	//	SocketPackageTrim PackageData1;
+	//	for (int i = 0; i < INFO_MAX_BUFFER_SIZE; i++)
+	//	{
+	//		PackageData1.SerialNumber[i] = camerainitparam.DevInfo.SpecialInfo.stUsb3VInfo.chSerialNumber[i];
+	//	}
 
-		//outFile << PackageData1.SerialNumber << "," << PackageData1.Framecnt;
-		//outFile << endl;
+	//	PackageData1.Framecnt = Buffer0Info.nFrameNum;
+	//	for (int i = 0; i < ImageHeight / DataTrim; i++)
+	//	{
+	//		PackageData1.s[i] = Calparam.point[i*DataTrim].s;
+	//		PackageData1.ay[i] = Calparam.point[i*DataTrim].ay;
+	//	}
 
-		//SendQueue.push(PackageData1);
-		if (EnableSendData)
-		{
-			char* buf = (char*)malloc(sizeof(SocketPackageTrim));
+	//	//outFile << PackageData1.SerialNumber << "," << PackageData1.Framecnt;
+	//	//outFile << endl;
 
-			memcpy(buf, &PackageData1, sizeof(SocketPackageTrim));
+	//	//SendQueue.push(PackageData1);
 
-			client.DsClientSend(buf, sizeof(SocketPackageTrim));
+	//	char* buf = (char*)malloc(sizeof(SocketPackageTrim));
 
+	//	memcpy(buf, &PackageData1, sizeof(SocketPackageTrim));
 
-		}
-	}
+	//	int ret = client.DsClientSend(buf, sizeof(SocketPackageTrim));
+
+	//	printf("Send Result1:%d\n", ret);
+
+	//	free(buf);
+	//		
+
+	//	
+	//}
 
 }
 
@@ -563,11 +570,13 @@ void CalImageThread()
 				{
 					if (PerforFramecntAll >= FrameRateControlData) {
 						if ((Buffer0Info.nFrameNum % ((PerforFramecntAll / FrameRateControlData))) == 0) {
+							//printf("Send Data to Server from if!\n");
 							thread SendToCsServer0(SendDataToCsServer);
 							SendToCsServer0.detach();
 						}
 					}
 					else if (PerforFramecntAll < FrameRateControlData) {
+						//printf("Send Data to Server from else if!\n");
 						thread SendToCsServer0(SendDataToCsServer);
 						SendToCsServer0.detach();
 					}
@@ -1179,7 +1188,7 @@ void DetectThread() {
 
 
 			}
-			Sleep(10);
+			Sleep(5);
 
 		}
 	}
@@ -1301,7 +1310,7 @@ int main(int argc,char* argv[])
 	//FUnctionChoice
 	args.add<UINT>("function", 'f', "FunctionChoice", false, 1, cmdline::range(1, 15));
 	//CameraParam
-	args.add<FLOAT>("exptime", 'e', "CameraExposureTime", false, 13000, cmdline::range<FLOAT>(0, 1000000));
+	args.add<FLOAT>("exptime", 'e', "CameraExposureTime", false, 2000, cmdline::range<FLOAT>(0, 1000000));
 	args.add<UINT>("expauto", '\0', "CameraExposureAuto", false, 0, cmdline::range(0, 2));
 	args.add<FLOAT>("gain", 'g', "CameraGain", false, 15, cmdline::range<FLOAT>(0, 15));
 	args.add<UINT>("gainauto", '\0', "CameraGainAuto", false, 0, cmdline::range(0, 2));
@@ -1342,9 +1351,10 @@ int main(int argc,char* argv[])
 	args.add<string>("filepath", 'p', "FilePath", false, "");
 	args.add<UINT>("format", 'o', "OutputFormat", false, 1, cmdline::range(0, 1));
 	//ClientParam
-	args.add<UINT>("serverport", 's', "ServerPort", false, 8001, cmdline::range(0, 65535));
+	args.add<UINT>("serverport", 's', "ServerPort", false, 0, cmdline::range(0, 65535));
 	args.add<string>("serveraddr", '\0', "ServerAddress", false, "127.0.0.1");
-
+	args.add<UINT>("fpic", '\0', "FrameRateControlForPicSyc", false, 3, cmdline::range(0, 200));
+	args.add<UINT>("fdata", '\0', "FrameRateControlForDataSyc", false, 3, cmdline::range(0, 200));
 	args.parse_check(argc, argv);
 
 	//FunctionChoice
@@ -1637,16 +1647,26 @@ int main(int argc,char* argv[])
 	//Port
 	if (args.exist("serverport"))
 	{
-		clientparam.StartUpPort = args.get<UINT>("serverport");
+		//clientparam.StartUpPort = args.get<UINT>("serverport");
 		//printf("the start port is %d", ServerStartup);
+		camerainitparam.DevPort = args.get<UINT>("serverport");
 	}
 	//Addr
 	if (args.exist("serveraddr"))
 	{
-		clientparam.ServerAddr = args.get<string>("serveraddr").data();
+		//clientparam.ServerAddr = args.get<string>("serveraddr").data();
 		csclientparam.ServerAddr = args.get<string>("serveraddr").data();
 		dsclientparam.ServerAddr = args.get<string>("serveraddr").data();
 	}
+	if (args.exist("fpic"))
+	{
+		FrameRateControlPic = args.get<UINT>("fpic");
+	}
+	if (args.exist("fdata"))
+	{
+		FrameRateControlData = args.get<UINT>("fdata");
+	}
+
 
 	//printf("ADDR :%s", clientparam.ServerAddr);
 

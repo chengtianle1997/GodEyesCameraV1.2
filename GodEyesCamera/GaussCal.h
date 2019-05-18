@@ -47,8 +47,7 @@ typedef struct
 	double minError = 0.13; //the error to bottom for Gausspoint selection
 	int xRange = 15; //horizontal range base on the estimated center for Gausspoint selection
 	int threads = 2; //threads used in OpenMP for Calculation
-	int StartScan = 500;
-	int EndScan = 1400;
+	
 
 	//The Physical Param Input(From Calib Result)
 	//double kx = 0.9558;
@@ -66,11 +65,7 @@ typedef struct
 	double p1 = 0.0029;
 	double p2 = 0.0033;
 
-
-	double RangeMin = 1000;
-	double RangeMax = 4500;
-
-	int CalScale = 1;
+	//int CalScale = 1;
 	
 }GaussCalParam;
 
@@ -125,4 +120,13 @@ private:
 	int n = 0;
 
 	vector<Point> points;
+
+	int StartScan = 500;
+	int EndScan = 1400;
+
+	double RangeMin = 1000;
+	double RangeMax = 4000;
+
+	double AyMin = -0.5;
+	double AyMax = 0.5;
 };

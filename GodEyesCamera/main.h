@@ -117,8 +117,8 @@ int PerforFrameenc = 0;
 int PerforFramecntAll = 40;
 int PerforFrameencAll = 10;
 //Wanted FrameRate input
-int FrameRateControlPic = 2;
-int FrameRateControlData = 10;
+int FrameRateControlPic = 3;
+int FrameRateControlData = 3;
 
 //Is First Second
 bool IsFirst = true;
@@ -142,7 +142,7 @@ static queue<SocketPackage> SendQueue;
 
 //The Application Entrance
 //int DeviceNum = 0;
-const char* FilePath = "C:\\EncodeResult";
+const char* FilePath = "D:\\EncodeResult";
 char* FinalPath;
 const char* SrNum;
 

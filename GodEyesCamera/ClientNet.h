@@ -39,12 +39,12 @@ typedef struct {
 }ClientParam;
 
 typedef struct {
-	int StartUpPort = 8090;
+	int StartUpPort = 8080;
 	const char* ServerAddr = "127.0.0.1";
 }CsClientParam;
 
 typedef struct {
-	int StartUpPort = 8080;
+	int StartUpPort = 8090;
 	const char* ServerAddr = "127.0.0.1";
 }DsClientParam;
 

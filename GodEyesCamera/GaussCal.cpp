@@ -59,22 +59,23 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 	//memset(brightness, 0, Rows);
 	//getPeaker1(matImage, point);
 #pragma omp parallel for num_threads(guasscalparam.threads)
-	for (int i = 0; i < Rows/guasscalparam.CalScale; i++)
+	for (int i = 0; i < Rows; i++)
 	{
-		uchar* data = guasscalparam.matImage.ptr<uchar>(guasscalparam.CalScale*i);
+		uchar* data = guasscalparam.matImage.ptr<uchar>(i);
 		int MaxPixel = data[0];
 		int MaxX(0);
-		for (int j = guasscalparam.StartScan; j < guasscalparam.EndScan; j++)
+		//for (int j = guasscalparam.StartScan; j < guasscalparam.EndScan; j++)
+		for (int j = StartScan; j < EndScan; j++)
 		{
 			if (data[j] > MaxPixel) {
 				MaxPixel = data[j];
 				MaxX = j;
 			}
 		}
-		guasscalparam.point[guasscalparam.CalScale*i].y = guasscalparam.CalScale*i;
-		guasscalparam.point[guasscalparam.CalScale*i].x = MaxX;
+		guasscalparam.point[i].y = i;
+		guasscalparam.point[i].x = MaxX;
 		//point[i].bright = MaxPixel;
-		guasscalparam.point[guasscalparam.CalScale*i].brightness = MaxPixel;
+		guasscalparam.point[i].brightness = MaxPixel;
 		//point[i].Rows = Rows;
 	}
 
@@ -140,16 +141,16 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 
 	//逐行存储所有点的x坐标和亮度值以便分析 在此只存入高斯点
 #pragma omp parallel for num_threads(guasscalparam.threads)
-	for (int i = 0; i < Rows/ guasscalparam.CalScale; i++) {
+	for (int i = 0; i < Rows; i++) {
 		int PixelData;
 		int Pixnum = 0;
 		GPoint *gpoint;
-		gpoint = new GPoint[Rows/ guasscalparam.CalScale];
+		gpoint = new GPoint[Rows];
 		Pixnum = 0;
 		//高斯点选取 
 		//watch.restart();
-		uchar* data = guasscalparam.matImage.ptr<uchar>(guasscalparam.CalScale*i);
-		for (int j = guasscalparam.point[guasscalparam.CalScale*i].x - guasscalparam.xRange; j <= guasscalparam.point[guasscalparam.CalScale*i].x + guasscalparam.xRange; j++) {
+		uchar* data = guasscalparam.matImage.ptr<uchar>(i);
+		for (int j = guasscalparam.point[i].x - guasscalparam.xRange; j <= guasscalparam.point[i].x + guasscalparam.xRange; j++) {
 			PixelData = data[j];
 			//cout << PixelData << endl;
 			//minerror和maxerror条件筛选高斯点  //后期在此处考虑xRange
@@ -157,7 +158,7 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 			//cout << "condition2" << (PixelData < ((1 - maxError)*brightness[i]))<<endl;
 			//cout << "condition3" << (abs(j - point[i].x) < xRange) << endl;
 
-			if (PixelData > guasscalparam.minError*guasscalparam.point[guasscalparam.CalScale*i].brightness && PixelData < ((1 - guasscalparam.maxError)*guasscalparam.point[guasscalparam.CalScale*i].brightness)) {
+			if (PixelData > guasscalparam.minError*guasscalparam.point[i].brightness && PixelData < ((1 - guasscalparam.maxError)*guasscalparam.point[i].brightness)) {
 				gpoint[Pixnum].x = j;
 				gpoint[Pixnum].brightness = PixelData;
 				Pixnum++;
@@ -245,29 +246,33 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 			//	cout << endl;*/
 			//结果计算
 			//watch.restart();
-			guasscalparam.point[guasscalparam.CalScale*i].cx = (-cvmGet(B, 1, 0))*1.0 / (2 * cvmGet(B, 2, 0));
-			guasscalparam.point[guasscalparam.CalScale*i].cy = guasscalparam.CalScale*i;
+			guasscalparam.point[i].cx = (-cvmGet(B, 1, 0))*1.0 / (2 * cvmGet(B, 2, 0));
+			guasscalparam.point[i].cy = i;
 			//RadialCorrection
-			double x = (guasscalparam.point[guasscalparam.CalScale*i].cx - guasscalparam.uo)/guasscalparam.fx;
-			double y = (guasscalparam.point[guasscalparam.CalScale*i].cy - guasscalparam.vo)/guasscalparam.fy;
+			double x = (guasscalparam.point[i].cx - guasscalparam.uo)/guasscalparam.fx;
+			double y = (guasscalparam.point[i].cy - guasscalparam.vo)/guasscalparam.fy;
 			double rsqrt = x * x + y * y;
 			double rsqrts = rsqrt * rsqrt;
-			guasscalparam.point[guasscalparam.CalScale*i].cx = guasscalparam.uo + (x * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fx;
-			guasscalparam.point[guasscalparam.CalScale*i].cy = guasscalparam.vo + (y * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fy;
+			guasscalparam.point[i].cx = guasscalparam.uo + (x * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fx;
+			guasscalparam.point[i].cy = guasscalparam.vo + (y * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fy;
 
 
-			guasscalparam.point[guasscalparam.CalScale*i].bright = exp(cvmGet(B, 0, 0) - cvmGet(B, 1, 0)*cvmGet(B, 1, 0) / (4 * cvmGet(B, 2, 0)));
-			guasscalparam.point[guasscalparam.CalScale*i].ay = atan((guasscalparam.vo - guasscalparam.point[guasscalparam.CalScale*i].cy) / guasscalparam.fy);
+			guasscalparam.point[i].bright = exp(cvmGet(B, 0, 0) - cvmGet(B, 1, 0)*cvmGet(B, 1, 0) / (4 * cvmGet(B, 2, 0)));
+
+			guasscalparam.point[i].ay = atan((guasscalparam.vo - guasscalparam.point[i].cy) / guasscalparam.fy);
 			//guasscalparam.point[i].ay = asin(guasscalparam.ky*sin(atan((guasscalparam.vo - guasscalparam.point[i].cy)/ guasscalparam.fy)));
-			double sDistance = guasscalparam.b*tan(guasscalparam.phi + atan((guasscalparam.uo - guasscalparam.point[guasscalparam.CalScale*i].cx) / guasscalparam.fx)) / cos(guasscalparam.point[i].ay);
-			if (sDistance >= guasscalparam.RangeMin && sDistance <= guasscalparam.RangeMax )
+			double sDistance = guasscalparam.b*tan(guasscalparam.phi + atan((guasscalparam.uo - guasscalparam.point[i].cx) / guasscalparam.fx)) / cos(guasscalparam.point[i].ay);
+			if (!isnan(guasscalparam.point[i].ay) && sDistance >= RangeMin && sDistance <= RangeMax&& guasscalparam.point[i].ay<AyMax && guasscalparam.point[i].ay>AyMin)
 			{
-				guasscalparam.point[guasscalparam.CalScale*i].s = sDistance;
-			}
+				guasscalparam.point[i].s = sDistance;
+			}			
 			else 
 			{
-				guasscalparam.point[guasscalparam.CalScale*i].s = 0;
+				guasscalparam.point[i].s = 0;
+				guasscalparam.point[i].ay = 0;
 			}
+
+
 			
 			//guasscalparam.point[i].s = guasscalparam.b*tan(guasscalparam.phi + asin(guasscalparam.kx*sin(atan((guasscalparam.uo - guasscalparam.point[i].cx) / guasscalparam.fx)))) / cos(guasscalparam.point[i].ay);
 
@@ -281,15 +286,16 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 			cvReleaseMat(&SC);
 		}
 		else {
-			guasscalparam.point[guasscalparam.CalScale*i].cx = 0;
-			guasscalparam.point[guasscalparam.CalScale*i].bright = 0;
+			guasscalparam.point[i].cx = 0;
+			guasscalparam.point[i].ay = 0;
+			guasscalparam.point[i].bright = 0;
 		}
-		guasscalparam.point[guasscalparam.CalScale*i].cy = guasscalparam.CalScale*i;
+		guasscalparam.point[i].cy = i;
 		//printf("(%lf , %lf): %d)\n", guasscalparam.point[i].cx, guasscalparam.point[i].cy, guasscalparam.point[i].brightness);
 		delete[]gpoint;
 	}
 }
-
+  
 //Automatical Identification for error base on the gate you can choose
 void GaussCal::GaussIdentify(GaussIdentifyParam gaussidentifyparam) {
 	int Rows = gaussidentifyparam.matImage.rows;//y

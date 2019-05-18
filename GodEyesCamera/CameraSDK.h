@@ -17,7 +17,7 @@ typedef struct {
 	int devNum; //device No.
 	int in_w; 
 	int in_h;
-	float ExposureTime = 5000;
+	float ExposureTime = 2000;
 	int ExposureAuto = 0;
 	float Gain = 15;
 	int GainAuto = 0;
@@ -37,6 +37,7 @@ typedef struct {
 	int TriggerActivation = 0;
 	float TriggerDelay = 0;
 	int TriggerCacheEnable = 0;
+	int DevPort = 0;
 	MV_CC_DEVICE_INFO DevInfo;
 
 }CameraInitParam;
