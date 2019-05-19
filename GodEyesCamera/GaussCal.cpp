@@ -256,6 +256,12 @@ void GaussCal::GaussCenter(GaussCalParam &guasscalparam) {
 			guasscalparam.point[i].cx = guasscalparam.uo + (x * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fx;
 			guasscalparam.point[i].cy = guasscalparam.vo + (y * (1 + guasscalparam.k1*rsqrt + guasscalparam.k2*rsqrts))*guasscalparam.fy;
 
+			//TangentialCorrection
+			x = (guasscalparam.point[i].cx - guasscalparam.uo) / guasscalparam.fx;
+			y = (guasscalparam.point[i].cy - guasscalparam.vo) / guasscalparam.fy;
+			rsqrt = x * x + y * y;
+			guasscalparam.point[i].cx = (x + 2 * guasscalparam.p1*x*y + guasscalparam.p2 * (rsqrt + 2 * x*x))*guasscalparam.fx + guasscalparam.uo;
+			guasscalparam.point[i].cy = (y + guasscalparam.p1*(rsqrt + 2 * y*y) + 2 * guasscalparam.p2*x*y)*guasscalparam.fy + guasscalparam.vo;
 
 			guasscalparam.point[i].bright = exp(cvmGet(B, 0, 0) - cvmGet(B, 1, 0)*cvmGet(B, 1, 0) / (4 * cvmGet(B, 2, 0)));
 

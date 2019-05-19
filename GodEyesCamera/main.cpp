@@ -1343,6 +1343,9 @@ int main(int argc,char* argv[])
 	args.add<FLOAT>("fy", '\0', "fy Param in pixels", false, 2358.9, cmdline::range<FLOAT>(-10000, 10000));
 	args.add<FLOAT>("k1", '\0', "k1 Param in RadialDistortion", false, -0.0627, cmdline::range<FLOAT>(-10000, 10000));
 	args.add<FLOAT>("k2", '\0', "k2 Param in RadialDistortion", false, 0.1200, cmdline::range<FLOAT>(-10000, 10000));
+	args.add<FLOAT>("p1", '\0', "p1 Param in RadialDistortion", false, 0.0029, cmdline::range<FLOAT>(-10000, 10000));
+	args.add<FLOAT>("p2", '\0', "p2 Param in RadialDistortion", false, 0.0033, cmdline::range<FLOAT>(-10000, 10000));
+
 	//EncoderParam
 	args.add<UINT>("fcut", 'c', "FrameCut", false, 5, cmdline::range(0, 60));
 	args.add<UINT>("brate", 'b', "BitRate", false, 200000000, cmdline::range(1000, 1000000000));
@@ -1611,6 +1614,16 @@ int main(int argc,char* argv[])
 	{
 		Calparam.k2 = args.get<FLOAT>("k2");
 	}
+	if (args.exist("p1"))
+	{
+		Calparam.p1 = args.get<FLOAT>("p1");
+	}
+	//k2
+	if (args.exist("p2"))
+	{
+		Calparam.p2 = args.get<FLOAT>("p2");
+	}
+
 
 	//Encoder
 	//FrameCut

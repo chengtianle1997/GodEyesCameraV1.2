@@ -121,11 +121,11 @@ private:
 
 	vector<Point> points;
 
-	int StartScan = 500;
+	int StartScan = 300;
 	int EndScan = 1400;
 
 	double RangeMin = 1000;
-	double RangeMax = 4000;
+	double RangeMax = 10000;
 
 	double AyMin = -0.5;
 	double AyMax = 0.5;
