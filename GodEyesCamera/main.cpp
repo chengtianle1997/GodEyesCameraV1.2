@@ -1358,6 +1358,7 @@ int main(int argc,char* argv[])
 	args.add<string>("serveraddr", '\0', "ServerAddress", false, "127.0.0.1");
 	args.add<UINT>("fpic", '\0', "FrameRateControlForPicSyc", false, 3, cmdline::range(0, 200));
 	args.add<UINT>("fdata", '\0', "FrameRateControlForDataSyc", false, 3, cmdline::range(0, 200));
+	args.add<UINT>("rm", '\0', "EnableRemoteServer", false, 0, cmdline::range(0, 200));
 	args.parse_check(argc, argv);
 
 	//FunctionChoice
@@ -1679,7 +1680,15 @@ int main(int argc,char* argv[])
 	{
 		FrameRateControlData = args.get<UINT>("fdata");
 	}
+	if (args.exist("rm"))
+	{
+		EnableRemoteServer = args.get<UINT>("rm");
+	}
 
+	if (EnableRemoteServer)
+	{
+		clientparam.ServerAddr = csclientparam.ServerAddr;
+	}
 
 	//printf("ADDR :%s", clientparam.ServerAddr);
 

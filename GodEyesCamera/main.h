@@ -102,6 +102,8 @@ int EnableCSSend = 0;
 int EnableDSSend = 0;
 //The New Way to send
 int EnableFinalSend = 0;
+//LocalServer Or RemoteServer
+int EnableRemoteServer = 0;
 
 int PrintDevList = 0;
 int SetDevNum = 0;
